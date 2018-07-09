@@ -1,0 +1,42 @@
+//{{operationId}}
+export interface {{operationId}}Parameters{
+{{#if globalparams}}
+	//path params
+	{{#each globalparams}}
+	{{this.name}}: {{translate this.schema.type}};
+	{{/each}}
+{{/if}}
+{{#if parameters}}
+	//parameters
+	{{#each parameters}}
+	{{this.name}}: {{this.schema.type}};
+	{{/each}}
+{{/if}}
+{{#if requestBody}}
+	//request body Parameters
+	{{#extractSchema requestBody}}
+		{{#eachInMap properties}}
+	{{key}}: {{translate value.type}}; //{{value.description}} - eg. {{value.example}} 
+		{{/eachInMap}}
+	{{/extractSchema}}
+{{/if}}	
+}
+
+export interface {{operationId}}ResponsePayload{
+	{{#extractResponses responses}}
+		{{#each responses}}
+		  {{#if this.schema}}
+		  	{{#eachInMap this.schema.properties}}
+	{{key}}: {{translate value.type}}; //{{value.description}} - eg. {{value.example}} 
+			{{/eachInMap}}
+		  {{/if}}
+		{{/each}}
+	{{/extractResponses}} 
+}
+export interface {{operationId}}Response{
+	code: number;
+	success: boolean;
+	errors: {};
+	payload: {{operationId}}ResponsePayload;
+}
+

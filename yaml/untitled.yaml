@@ -1,0 +1,136 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Mothership
+servers:
+  - url: http://mothership-516381200.eu-west-1.elb.amazonaws.com
+    description: staging environment
+paths:
+  /resources/newsletter/subscription:
+    post:
+      summary: Create a subscription
+      description: Creates customer newsletter subscription.
+      operationId: createSubscription
+      tags:
+        - newsletter subscription
+      responses:
+        '200':
+          description: newsletter subscription created
+      requestBody:
+        description: Provide customer email here
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/NewsletterSubscription'
+
+  /content/{store}/navigation:
+    parameters:
+      - name: store
+        in: path
+        description: Selected store code. No implementation yet so pass anything.
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get navigation data model
+      description: Returns data needed for navigation panel on charlotte's webpage.
+      operationId: getNavigation
+      tags:
+        - content
+      responses:
+        '200':
+          description: Just try it out, model is to complex to include here :)
+
+  /content/{store}/productlisting/{productId}:
+    parameters:
+      - name: store
+        in: path
+        description: Selected store code. No implementation yet so pass anything.
+        required: true
+        schema:
+          type: string
+      - name: productId
+        in: path
+        description: Product id. No implementation yet so pass anything.
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get product data model
+      description: Returns data needed for PLP.
+      operationId: getProductListingPage
+      tags:
+        - content
+      responses:
+        '200':
+          description: Just try it out, model is to complex to include here :)
+
+  /oauth/authorize/{store}:
+    post:
+      parameters:
+        - in: path
+          name: store
+          required: true
+          schema:
+            type: string
+            example: ct_store_uk
+      requestBody:
+        description: Role of the user. Username and password if REGISTERED user.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthData'
+      summary: Get auth token for public or registered user
+      description: Returns authentication token
+      operationId: authenticate
+      tags:
+        - authentication
+      responses:
+        '200':
+          description: Auth token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+
+components:
+  schemas:
+    NewsletterSubscription:
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          example: look@you.lol
+    AccessToken:
+      properties:
+        access_token:
+          type: string
+          example: 1319c1a7-b984-4765-b25e-1aafbcbd72b1
+        token_type:
+          type: string
+          example: bearer
+        scope:
+          type: string
+          example: ct_store_uk
+        role:
+          type: string
+          example: REGISTERED # It will be PUBLIC for public users
+        expires_in:
+          type: integer
+          example: 123456
+    AuthData:
+      properties:
+        role:
+          type: string
+          enum: [PUBLIC, REGISTERED]
+          example: REGISTERED
+        username:
+          type: string
+          example: gb_customer@ct.com
+          description: Only needed for registered users
+        password:
+          type: string
+          example: 11111111
+          description: Only needed for registered users
