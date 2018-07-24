@@ -6,7 +6,7 @@ servers:
   - url: http://mothership-516381200.eu-west-1.elb.amazonaws.com
     description: staging environment
 paths:
-  /resources/newsletter/subscription:
+  /api/resources/newsletter/subscription:
     post:
       summary: Create a subscription
       description: Creates customer newsletter subscription.
@@ -23,14 +23,29 @@ paths:
             schema:
               $ref: '#/components/schemas/NewsletterSubscription'
 
-  /content/{store}/navigation:
+  /api/resources/{storeCode}/wishlist/{productId}:
     parameters:
-      - name: store
+      - $ref: "#/components/parameters/AuthHeaderParam"
+      - $ref: "#/components/parameters/StoreParam"
+      - name: productId
         in: path
-        description: Selected store code. No implementation yet so pass anything.
+        description: Product id.
+        example: "qgqvhocdkrpwy2lqon2gsy3ll5vwszdnmfxhgx3lnfzxg="
         required: true
         schema:
           type: string
+    put:
+      summary: Add product to a wishlist
+      operationId: addProductToWishlist
+      tags:
+        - Wishlist
+      responses:
+        '204':
+          description: No content
+
+  /api/content/{storeCode}/navigation:
+    parameters:
+      - $ref: '#/components/parameters/StoreParam'
     get:
       summary: Get navigation data model
       description: Returns data needed for navigation panel on charlotte's webpage.
@@ -41,22 +56,17 @@ paths:
         '200':
           description: Just try it out, model is to complex to include here :)
 
-  /content/{store}/productlisting/{productId}:
+  /api/content/{storeCode}/productlisting/{productListingId}:
     parameters:
-      - name: store
+      - $ref: '#/components/parameters/StoreParam'
+      - name: productListingId
         in: path
-        description: Selected store code. No implementation yet so pass anything.
-        required: true
-        schema:
-          type: string
-      - name: productId
-        in: path
-        description: Product id. No implementation yet so pass anything.
+        description: Product Listing Page id. Should be human readable and can contain slashes.
         required: true
         schema:
           type: string
     get:
-      summary: Get product data model
+      summary: Get product listing page model
       description: Returns data needed for PLP.
       operationId: getProductListingPage
       tags:
@@ -65,15 +75,95 @@ paths:
         '200':
           description: Just try it out, model is to complex to include here :)
 
-  /oauth/authorize/{store}:
-    post:
+  /api/content/{storeCode}/product/{productId}:
+    parameters:
+      - $ref: '#/components/parameters/StoreParam'
+      - name: productId
+        in: path
+        description: Product id. Human readable and can contain slashes.
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get product data model
+      description: Returns data needed for PDP.
+      operationId: getProductPage
+      tags:
+        - content
+      responses:
+        '200':
+          description: Just try it out, model is to complex to include here :)
+
+  /api/resource/{storeCode}/basket/summary:
+    parameters:
+      - $ref: '#/components/parameters/StoreParam'
+      - $ref: '#/components/parameters/AuthHeaderParam'
+    get:
+      summary: Get basket summary
+      description: Returns basket value and number of items.
+      operationId: getBasketSummary
+      tags:
+        - basket
+      responses:
+        '200':
+          description: Basket summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasketSummary'
+  /api/resources/{storeCode}/basket/{productId}:
+    put:
       parameters:
-        - in: path
-          name: store
+        - $ref: "#/components/parameters/AuthHeaderParam"
+        - $ref: "#/components/parameters/StoreParam"
+        - name: productId
+          in: path
+          description: Product id.
+          example: "qgqvhocdkrpwy2lqon2gsy3ll5vwszdnmfxhgx3lnfzxg="
           required: true
           schema:
             type: string
-            example: ct_store_uk
+
+      summary: Add product to the basket
+      operationId: addProductToBasket
+      tags:
+        - basket
+      requestBody:
+        description: Quantity of the product being added.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Quantity'
+      responses:
+        '204':
+          description: No content
+  /api/resources/{storeCode}/basket/{basketId}/{lineItemId}:
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/AuthHeaderParam"
+        - $ref: "#/components/parameters/StoreParam"
+        - $ref: "#/components/parameters/BasketIdParam"
+        - $ref: "#/components/parameters/LineItemIdParam"
+
+      summary: Delete product from basket
+      operationId: removeProductFromBasket
+      tags:
+        - basket
+      responses:
+        '204':
+          description: No content
+  /api/resources/oauth/authorize/{storeCode}:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/StoreParam'
+        - in: header
+          name: Authorization
+          description: optional public token, if merge is needed during REGISTERED user login
+          example: Bearer 1319c1a7-b984-4765-b25e-1aafbcbd72b1
+          required: false
+          schema:
+            type: string
       requestBody:
         description: Role of the user. Username and password if REGISTERED user.
         required: true
@@ -92,7 +182,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccessToken'
+                $ref: '#/components/schemas/AccessTokenResponse'
+  /api/resources/oauth/unauthorize/:
+    delete:
+      parameters:
+        - $ref: '#/components/parameters/AuthHeaderParam'
+      description: Delete auth token
+      tags:
+        - authentication
+      responses:
+        '200':
+          description: Auth token deleted
 
 components:
   schemas:
@@ -103,7 +203,29 @@ components:
         email:
           type: string
           example: look@you.lol
-    AccessToken:
+    Price:
+      required:
+        - amount
+        - currencyCode
+      properties:
+        amount:
+          type: number
+          example: 10.00
+        currencyCode:
+          type: string
+          enum: [GBP, EUR]
+          example: GBP
+    BasketSummary:
+      required:
+        - totalQuantity
+        - price
+      properties:
+        totalQuantity:
+          type: integer
+          example: 1
+        price:
+            $ref: '#/components/schemas/Price'
+    AccessTokenResponse:
       properties:
         access_token:
           type: string
@@ -134,3 +256,46 @@ components:
           type: string
           example: 11111111
           description: Only needed for registered users
+    Quantity:
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          example: 5
+  parameters:
+    StoreParam:
+      name: storeCode
+      in: path
+      description: Selected store code
+      required: true
+      example: UK
+      schema:
+        type: string
+        enum: [UK, EU]
+    AuthHeaderParam:
+      name: Authorization
+      in: header
+      required: true
+      example: Bearer 1319c1a7-b984-4765-b25e-1aafbcbd72b1
+      schema:
+        type: string
+      description: Authorization token
+    BasketIdParam:
+      name: basketId
+      in: path
+      description: Basket identifier
+      required: true
+      example: ha3tezrtmy2diljummztkljumi3=
+      schema:
+        type: string
+        example: ha3tezrtmy2diljummztkljumi3=
+    LineItemIdParam:
+      name: lineItemId
+      in: path
+      description: Line item identifier
+      required: true
+      example: meytimzsgiygkljumvrgkljumu=
+      schema:
+        type: string
+        example: meytimzsgiygkljumvrgkljumu=

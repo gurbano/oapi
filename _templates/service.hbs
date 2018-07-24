@@ -1,0 +1,55 @@
+{{>readme}}
+
+export interface Service{
+	info: ServiceInfo;
+	servers: Array<Server>;
+}
+export interface ServiceInfo{
+	version: string;
+	title: string;
+	description?: string;
+}
+export interface Server{
+	url: string;
+	description?: string;
+	variables?: Map<String, any>;
+};
+
+{{#eachInMap paths}}
+	{{#if value.get}}
+
+{{>interface value.get globalparams = value.parameters}}
+
+	{{/if}}
+	{{#if value.post}}
+
+{{>interface value.post globalparams = value.parameters}}
+
+	{{/if}}
+{{/eachInMap}}
+
+
+export default class {{info.title}}Service implements Service{
+	public info: ServiceInfo;
+	public servers: Array<Server>;
+	constructor(){
+		this.info =  {version: '{{ info.version }}', title: '{{ info.title }}',  };
+		this.servers = [ {{#each servers}}
+		{  url: '{{this.url}}', description: '{{this.description}}' },
+	{{/each}} ];
+		console.log(this.info.title,' ready');
+	}
+	/* METHODS */
+{{#eachInMap paths}}
+	{{#if value.get}}
+	{{>method value.get globalparams = value.parameters method='get' path=key}}
+	{{/if}}
+	{{#if value.post}}
+	{{>method value.post globalparams = value.parameters method='post' path=key}}
+	{{/if}}
+{{/eachInMap}}
+
+}
+
+
+const service = new MothershipService();

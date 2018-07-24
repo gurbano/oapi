@@ -78,33 +78,29 @@ export default class GeneratorService{
 	constructor(){
 		this.templates = new Map();
 		this.loadTemplates();
-		this.generate = this.generate.bind(this);
 		this.generateService = this.generateService.bind(this);
 	}
 	loadTemplates(){ 
-		this.templates.set(TemplateKey.INTERFACE, 
+		/*this.templates.set(TemplateKey.INTERFACE, 
 			Handlebars.compile(fs.readFileSync(__dirname+'/../../templates/interface.hbs', 'utf8')) );
 		Handlebars.registerPartial(TemplateKey.INTERFACE.valueOf(), this.templates.get(TemplateKey.INTERFACE) );
-		
-		this.templates.set(TemplateKey.README, 
-			Handlebars.compile(fs.readFileSync(__dirname+'/../../templates/readme.hbs', 'utf8')) );
-		Handlebars.registerPartial(TemplateKey.README.valueOf(), this.templates.get(TemplateKey.README) );
-		
+
 		this.templates.set(TemplateKey.METHOD, 
 			Handlebars.compile(fs.readFileSync(__dirname+'/../../templates/method.hbs', 'utf8')) );
 		Handlebars.registerPartial(TemplateKey.METHOD.valueOf(), this.templates.get(TemplateKey.METHOD) );
-		
+		*/
+		const registerTemplate = (temp: TemplateKey) => {
+			console.log('registeing', temp);
+			this.templates.set(temp, 
+				Handlebars.compile(fs.readFileSync(__dirname + `/../../templates/${temp.valueOf()}.hbs`, 'utf8')) );
+			Handlebars.registerPartial(temp.valueOf(), this.templates.get(temp) );
+		}
 
-		this.templates.set(TemplateKey.SERVICE, 
-			Handlebars.compile(fs.readFileSync(__dirname+'/../../templates/service.hbs', 'utf8')) );
-		
+		[	TemplateKey.SERVICE, 
+			TemplateKey.README
+		].map( t => registerTemplate(t));
 	}
-	generate(spec: Api): Generated{
-		var ret = new Array<string>();
-		//const interfaces = this.generateInterfaces(spec);
 
-		return {interfaces: ret };
-	}
 
 	async generateService(spec: Api): Promise<string>{
 		const ret =  ( this.templates.get(TemplateKey.SERVICE) || function(){return '';} ) (spec);
