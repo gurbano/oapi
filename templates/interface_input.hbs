@@ -1,0 +1,10 @@
+//{{operationId}}
+export interface I{{operationId}}Parameters{
+    {{#each parameters}}
+		//{{this.location}}
+		{{variableName this}}: {{variableType this.type}}; //{{this.description}} - eg. {{this.example}} 
+	{{/each}}
+}
+export interface I{{operationId}}Response{
+	//TODO
+}

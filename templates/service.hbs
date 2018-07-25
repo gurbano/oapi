@@ -18,7 +18,20 @@ export interface I{{info.title}}Service{
 	info: IServiceInfo;
 	servers: Array<IServer>;
 }
+//INTERFACES
+{{#each endpoints}}
+	{{>interface_input}}
+{{/each}}
 
+//httpActionCreator(`/resources/newsletter/subscription`, METHODS.post, FETCH_EMAIL, { body: { email: email }});
+
+const httpActionCreator= (
+	url: string,
+	method: string,
+	action: string,
+	body: any,
+	header: any,
+): Promise<any> => {return Promise.resolve({})}
 
 export default class {{info.title}}Service implements I{{info.title}}Service{
 	public info: IServiceInfo;
@@ -28,11 +41,10 @@ export default class {{info.title}}Service implements I{{info.title}}Service{
 		this.servers = [ {{#each servers}}
 		{  url: '{{this.url}}', description: '{{this.description}}' },
 	{{/each}} ];
-		console.log(this.info.title,' ready');
 	}
 	/* METHODS */
 	{{#each endpoints}}
-		
+		{{>method}}
 	{{/each}}
 }
 

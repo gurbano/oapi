@@ -1,0 +1,22 @@
+/*	--- {{operationId}}: {{summary}} ---
+	{{description}}
+
+	ENDPOINT: {{url}}
+	METHOD: {{method}}
+	TAGS: [{{tags}}]
+*/
+
+
+async {{operationId}}(args: I{{operationId}}Parameters): Promise<I{{operationId}}Response> {
+
+	const { {{#each parameters}} {{this.name}} ,{{/each}} } = args;
+
+	return httpActionCreator(
+		"{{this.url}}", //url
+		"{{this.method}}", //method
+		"",//action
+		{},//body
+		{},//header
+	);
+}
+

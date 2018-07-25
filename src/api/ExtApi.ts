@@ -11,7 +11,13 @@ const defaultParamsStyle = {
     [ParameterLocation.PATH]: Styles.SIMPLE,
     [ParameterLocation.QUERY]: Styles.FORM,
 }
-export type ILocation = ParameterLocation;
+export enum ILocation {
+	QUERY= 'query',
+	HEADER= 'header',
+	PATH= 'path',
+	COOKIE= 'cookie',
+	BODY= 'body',
+}
 export enum METHODS {
     get,
     post,
@@ -21,22 +27,28 @@ export enum METHODS {
   }
 
 export interface ISchema {
-
-}
-export interface IContent {
-    
+    type: string;
 }
 
 export interface IParameter{
     name: string;
-    location: keyof ILocation;
+    required: boolean;
+    location?: keyof ILocation ;
     description: string;
-    spec: ISchema | IContent | any;
+    example: string;
+    schema: ISchema | string;
+    type: string;
+    //
+    mediaType?: string;
+    source?: string; //endpoint, local, body 
 }
 export interface IEndpoint{
+    operationId?: string;
     url: string;
     method: string;
     parameters: Array<IParameter>;
+    description: string;
+    summary: string;
 }
 
 export default interface ExtApi extends Api{

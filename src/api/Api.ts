@@ -134,7 +134,9 @@ export interface HeaderObject extends ReferenceObject {
 	content?: Map<string, MediaTypeObject >;
 }
 export interface SchemaObject extends ReferenceObject{ 
-
+	properties?: any;
+	type?: string;
+	required?: Array<string>;
 }
 export interface RequestBodyObject extends ReferenceObject{ 
 	description?: string;
