@@ -7,7 +7,7 @@ export interface Api{
 	info: InfoObject;
 	paths: Map<string, PathItemObject>;
 	servers?: Array<Server>;
-	components?: Components;
+	components: Components;
 	security?: any; 
 
 
@@ -156,6 +156,6 @@ export interface ResponseObject extends ReferenceObject{
 
 
 export interface Components{
-	schemas?: Map<string, SchemaObject>;
-	parameters?: Map<string, ParameterObject>;
+	schemas: Map<string, SchemaObject>;
+	parameters: Map<string, ParameterObject>;
 }

@@ -1,12 +1,9 @@
-import ExtApi, { ILocation, METHODS, IEndpoint, IParameter, ISchema, IResponse } from "../api/ExtApi";
+import ExtApi, { ILocation, METHODS, IEndpoint, IParameter, ISchema, IResponse, IResponseParameters } from "../api/ExtApi";
 import { Api, PathItemObject, ParameterObject, PathOperation, ParameterLocation, MediaTypeObject, ResponseObject } from "../api/Api";
 
 //TODO:
 // EXTRACT PARAMS FROM SCHEMA
 //      https://tools.ietf.org/html/draft-wright-json-schema-00
-
-
-
 const generateEndpoints = (url: string, spec: PathItemObject): Array<IEndpoint> => {
     const globalParams : Array<ParameterObject> = spec.parameters || [];
     return Object.keys(spec)
@@ -71,22 +68,41 @@ const extractRequestParameters = (spec: PathOperation): Array<IParameter> => {
       }
 }
 
-const extractResponses = (spec: PathOperation): Array<IResponse> => {
-  let ret: Array<IResponse> = [];
-  Object.keys(spec.responses || {}).map(code => {
-    if (spec.responses){
-      let respObj: ResponseObject = (<any>spec.responses)[code];
-      let mto: MediaTypeObject = {schema: {}};
-      if (respObj.content){
-        mto = <MediaTypeObject>(<any>respObj.content)[Object.keys(respObj.content)[0]];
+
+const extractResponse = (code: string, respObj: ResponseObject): IResponse => {
+  let ret = {};
+  let mto: MediaTypeObject = {schema: {}};
+  if (respObj.content){
+    mto = <MediaTypeObject>(<any>respObj.content)[Object.keys(respObj.content)[0]];
+    let mediaType = (Object.keys(respObj.content)|| ['???'])[0];
+    let schema = mto.schema || {properties: []};
+    let params: Array<IResponseParameters> = Object.keys(schema.properties).map(
+      (prop: string) => {
+          let propSchema=  schema.properties[prop];
+          //console.log(JSON.stringify(propSchema));
+          return { 
+              name: prop, 
+              description: propSchema.description,
+              schema: JSON.stringify(propSchema),
+              type: propSchema.type || 'any',          
+              mediaType: mediaType,
+              example: propSchema.example,
+          }
       }
-      ret.push({
-        code: code,
-        description: respObj.description || 'missing description' ,
-        schema: mto.schema || {}
-      });
+    );
+    return {
+      code: code,
+      data: params,
     }
-  });
+  }else{
+    return{
+      code: code,
+      data: [],
+    }
+  }
+}
+const extractResponses = (spec: PathOperation): Array<IResponse> => {
+  let ret: Array<IResponse> = Object.keys(spec.responses || {}).map(code => extractResponse(code,  (<any>spec.responses)[code]));
   return ret;
 }
 const generateEndpoint = (

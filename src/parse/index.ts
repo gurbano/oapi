@@ -13,7 +13,10 @@ export default class ApiParser{
 			while(path.length>0){
 				ret = ret[path.shift() || 0];//remove # char from reference path
 			} 
-			return ret;
+      return ret;
+      //return {
+      // type: `I${path.reverse()[0]}`,
+      //}
 		}
 		let self = this;
 		function iterObj(obj: any, context: Api){
@@ -25,7 +28,7 @@ export default class ApiParser{
 				if (obj.hasOwnProperty(key)){
 					if (key==='$ref'){
 						let refPath = obj['$ref'].split('/');
-				  		refPath.shift(); 
+				  	refPath.shift(); 
 						ret = digReference(refPath, api);
 						ret.originalRef = obj['$ref'];
 					}else if (obj[key] !== null && typeof obj[key] == "string") {

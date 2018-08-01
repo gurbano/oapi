@@ -28,6 +28,7 @@ export enum METHODS {
 
 export interface ISchema {
     type: string;
+
 }
 
 export interface IParameter{
@@ -42,10 +43,19 @@ export interface IParameter{
     mediaType?: string;
     source?: string; //endpoint, local, body 
 }
-export interface IResponse{
+
+export interface IResponseParameters {
+  schema: ISchema | string;
+  description: string;
+  name: string;
+  location?: keyof ILocation ;
+  example: string;
+  type: string;
+  mediaType?: string;
+}
+export interface IResponse {
     code: string;
-    schema: Partial<ISchema> | string;
-    description: string;
+    data: Array<IResponseParameters>;
 }
 export interface IEndpoint{
     operationId?: string;

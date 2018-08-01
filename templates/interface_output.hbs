@@ -1,3 +1,9 @@
 export interface I{{operationId}}Response{
-	//TODO
+	 {{#each responses}}
+      //{{this.code}} - {{this.description}}
+      {{#each data}}
+      {{this.name}}: {{{variableType this.type}}};
+      {{/each}}
+      
+   {{/each}}
 }

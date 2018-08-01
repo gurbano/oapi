@@ -36,7 +36,7 @@ program
   .then(parser.extractReference)
   .then(parser.extractReference)
   .then(parser.extractReference)
-	//.then(writer.write.bind(null, 'processed.json'))
+	.then(writer.write.bind(null, 'extracted.json'))
 	.then(transformer.extractEndpoints)
 	.then(writer.write.bind(null, 'processed.json'))
 	.then(generator.generateService)

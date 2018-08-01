@@ -34,16 +34,6 @@ export interface IMothershipService{
 }
 
 //ENDPOINTS INTERFACES
-  // createSubscription input
-	export interface IcreateSubscriptionParameters{
-			email: string; // - eg. look@you.lol (found in body)
-	}
-
-  // createSubscription output
-  export interface IcreateSubscriptionResponse{
-  	//TODO
-  }
-
   // getProductListingPage input
 	export interface IgetProductListingPageParameters{
 			storeCode: string; //Selected store code - eg. UK (found in path)
@@ -52,7 +42,30 @@ export interface IMothershipService{
 
   // getProductListingPage output
   export interface IgetProductListingPageResponse{
-  	//TODO
+        //200 - 
+        description: string;
+        title: string;
+        heroImage: object;
+        breadcrumbs: Array<any>;
+        links: Array<any>;
+        heroLinks: Array<any>;
+        filters: Array<any>;
+        products: Array<any>;
+        
+  }
+
+  // getBasketSummary input
+	export interface IgetBasketSummaryParameters{
+			storeCode: string; //Selected store code - eg. UK (found in path)
+			Authorization: string; //Authorization token - eg. Bearer 1319c1a7-b984-4765-b25e-1aafbcbd72b1 (found in header)
+	}
+
+  // getBasketSummary output
+  export interface IgetBasketSummaryResponse{
+        //200 - 
+        totalQuantity: number;
+        price: any;
+        
   }
 
 
@@ -67,35 +80,6 @@ export default class MothershipService implements IMothershipService{
 	 ];
 	}
 	/* METHODS */
-		/*	--- createSubscription: Create a subscription ---
-			Creates customer newsletter subscription.
-		
-			ENDPOINT: /api/resources/newsletter/subscription
-			METHOD: post
-			TAGS: []
-		*/
-		
-		
-		async createSubscription(args: IcreateSubscriptionParameters): Promise<IcreateSubscriptionResponse> {
-		
-			const {  email , } = args;
-		  const body = {  email,  }
-		  const header = {  }
-		  const cookie = {  }
-		  const query = {  }
-		  //query
-		  const queryString = toQueryString(query);
-		
-			return ApiCallWrapper(
-				`/api/resources/newsletter/subscription?${queryString}`, //url
-				"post", //method
-				"",//action
-				body,
-				header,
-		    cookie,
-			);
-		}
-		
 		/*	--- getProductListingPage: Get product listing page model ---
 			Returns data needed for PLP.
 		
@@ -117,6 +101,35 @@ export default class MothershipService implements IMothershipService{
 		
 			return ApiCallWrapper(
 				`/api/content/${storeCode}/productlisting/${productListingId}?${queryString}`, //url
+				"get", //method
+				"",//action
+				body,
+				header,
+		    cookie,
+			);
+		}
+		
+		/*	--- getBasketSummary: Get basket summary ---
+			Returns basket value and number of items.
+		
+			ENDPOINT: /api/resource/${storeCode}/basket/summary
+			METHOD: get
+			TAGS: []
+		*/
+		
+		
+		async getBasketSummary(args: IgetBasketSummaryParameters): Promise<IgetBasketSummaryResponse> {
+		
+			const {  storeCode , Authorization , } = args;
+		  const body = {  }
+		  const header = {  Authorization,  }
+		  const cookie = {  }
+		  const query = {  }
+		  //query
+		  const queryString = toQueryString(query);
+		
+			return ApiCallWrapper(
+				`/api/resource/${storeCode}/basket/summary?${queryString}`, //url
 				"get", //method
 				"",//action
 				body,

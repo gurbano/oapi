@@ -1,5 +1,5 @@
 export interface I{{operationId}}Parameters{
-    {{#each allParameters}}
+  {{#each allParameters}}
 		{{variableName this}}: {{variableType this.type}}; //{{this.description}} - eg. {{this.example}} (found in {{this.location}})
 	{{/each}}
 }
