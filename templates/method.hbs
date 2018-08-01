@@ -9,14 +9,21 @@
 
 async {{operationId}}(args: I{{operationId}}Parameters): Promise<I{{operationId}}Response> {
 
-	const { {{#each parameters}} {{this.name}} ,{{/each}} } = args;
+	const { {{#each allParameters}} {{this.name}} ,{{/each}} } = args;
+  const body = { {{#each parameters.body}} {{this.name}}, {{/each}} }
+  const header = { {{#each parameters.header}} {{this.name}}, {{/each}} }
+  const cookie = { {{#each parameters.cookie}} {{this.name}}, {{/each}} }
+  const query = { {{#each parameters.query}} {{this.name}}, {{/each}} }
+  //query
+  const queryString = toQueryString(query);
 
-	return httpActionCreator(
-		"{{this.url}}", //url
+	return ApiCallWrapper(
+		`{{this.url}}?${queryString}`, //url
 		"{{this.method}}", //method
 		"",//action
-		{},//body
-		{},//header
+		body,
+		header,
+    cookie,
 	);
 }
 

@@ -31,7 +31,8 @@ export enum TemplateKey{
 	SERVICE = 'service', 
 	METHOD = 'method',
 	README = 'readme',
-	INTERFACE_INPUT = 'interface_input',
+  INTERFACE_INPUT = 'interface_input',
+  INTERFACE_OUTPUT = 'interface_output',
 	PARAMETER = 'parameter',
 }
 
@@ -54,7 +55,8 @@ export default class GeneratorService{
 		[	TemplateKey.SERVICE, 
 			TemplateKey.README,
 			TemplateKey.METHOD,
-			TemplateKey.INTERFACE_INPUT,
+      TemplateKey.INTERFACE_INPUT,
+      TemplateKey.INTERFACE_OUTPUT,
 			TemplateKey.PARAMETER
 		].map( t => registerTemplate(t));
 	}

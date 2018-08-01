@@ -57,7 +57,6 @@ export interface PathItemObject extends ReferenceObject{
 
 //Describes a single API operation on a path.
 //https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#operationObject	
-
 export interface PathOperation{ 
 	responses?: Map<string, ResponseObject >;
 	requestBody?: RequestBodyObject ;
@@ -136,7 +135,8 @@ export interface HeaderObject extends ReferenceObject {
 export interface SchemaObject extends ReferenceObject{ 
 	properties?: any;
 	type?: string;
-	required?: Array<string>;
+  required?: Array<string>;
+  title?: string;
 }
 export interface RequestBodyObject extends ReferenceObject{ 
 	description?: string;
@@ -148,7 +148,8 @@ export interface MediaTypeObject extends ReferenceObject{
 }
 export interface ResponseObject extends ReferenceObject{ 
 	description?: string;
-	content: Map<string, MediaTypeObject>; //key is 'application/json'
+  content: Map<string, MediaTypeObject>; //key is 'application/json'
+  links: Map<string, ReferenceObject>;
 }
 
 

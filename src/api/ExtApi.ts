@@ -42,11 +42,24 @@ export interface IParameter{
     mediaType?: string;
     source?: string; //endpoint, local, body 
 }
+export interface IResponse{
+    code: string;
+    schema: Partial<ISchema> | string;
+    description: string;
+}
 export interface IEndpoint{
     operationId?: string;
     url: string;
     method: string;
-    parameters: Array<IParameter>;
+    allParameters: Array<IParameter>;
+    parameters:{
+      query: Array<IParameter>;
+      header: Array<IParameter>;
+      path: Array<IParameter>;
+      cookie: Array<IParameter>;
+      body: Array<IParameter>;
+    }
+    responses: Array<IResponse>;
     description: string;
     summary: string;
 }

@@ -1,5 +1,5 @@
-import ExtApi, { ILocation, METHODS, IEndpoint, IParameter, ISchema } from "../api/ExtApi";
-import { Api, PathItemObject, ParameterObject, PathOperation, ParameterLocation, MediaTypeObject } from "../api/Api";
+import ExtApi, { ILocation, METHODS, IEndpoint, IParameter, ISchema, IResponse } from "../api/ExtApi";
+import { Api, PathItemObject, ParameterObject, PathOperation, ParameterLocation, MediaTypeObject, ResponseObject } from "../api/Api";
 
 //TODO:
 // EXTRACT PARAMS FROM SCHEMA
@@ -39,6 +39,56 @@ const transformParameter = (gp: ParameterObject): IParameter => {
     };
     return ret;
 }
+
+const extractRequestParameters = (spec: PathOperation): Array<IParameter> => {
+      if (spec.requestBody){
+          let mto = <MediaTypeObject>(<any>spec.requestBody.content)[Object.keys(spec.requestBody.content)[0]];
+          let schema = mto.schema || {};
+          let mediaType = Object.keys(spec.requestBody.content)[0];
+          if (schema && schema.properties){
+              let required = schema.required || [];
+              return Object.keys(schema.properties).map(
+                  (prop: string) => {
+                      let propSchema=  schema.properties[prop];
+                      return { 
+                          name: prop, 
+                          location: (<any>ILocation.BODY) , 
+                          description: propSchema.description,
+                          schema: JSON.stringify(propSchema),
+                          type: propSchema.type,          
+                          mediaType: mediaType,
+                          source: 'body',
+                          required: required.indexOf(prop) > -1,
+                          example: propSchema.example,
+                      }
+                  }
+              )
+          }else{
+            return [];
+          }
+      }else{
+        return [];
+      }
+}
+
+const extractResponses = (spec: PathOperation): Array<IResponse> => {
+  let ret: Array<IResponse> = [];
+  Object.keys(spec.responses || {}).map(code => {
+    if (spec.responses){
+      let respObj: ResponseObject = (<any>spec.responses)[code];
+      let mto: MediaTypeObject = {schema: {}};
+      if (respObj.content){
+        mto = <MediaTypeObject>(<any>respObj.content)[Object.keys(respObj.content)[0]];
+      }
+      ret.push({
+        code: code,
+        description: respObj.description || 'missing description' ,
+        schema: mto.schema || {}
+      });
+    }
+  });
+  return ret;
+}
 const generateEndpoint = (
             url: string, 
             method: string, 
@@ -46,60 +96,41 @@ const generateEndpoint = (
             spec: PathOperation, 
         ): IEndpoint => {
             let parameters: Array<IParameter> = [];
-            let gps: Array<IParameter> = globalParams.map( (gp: ParameterObject) => { return {...transformParameter(gp), source: 'endpoint'} })
-            let lps: Array<IParameter> = (spec.parameters||[]).map( (gp: ParameterObject) => { return {...transformParameter(gp), source: 'local'} })
-            let requestParams:  Array<IParameter> = [];
-            if (spec.requestBody){
-                let mto = <MediaTypeObject>(<any>spec.requestBody.content)[Object.keys(spec.requestBody.content)[0]];
-                let schema = mto.schema || {};
-                let mediaType = Object.keys(spec.requestBody.content)[0];
-                if (schema && schema.properties){
-                    let required = schema.required || [];
-                    
-                    Object.keys(schema.properties).map(
-                        (prop: string) => {
-                            let propSchema=  schema.properties[prop];
-                            requestParams.push({ 
-                                name: prop, 
-                                location: (<any>ILocation.BODY) , 
-                                description: propSchema.description,
-                                schema: JSON.stringify(propSchema),
-                                type: propSchema.type,          
-                                mediaType: mediaType,
-                                source: 'body',
-                                required: required.indexOf(prop) > -1,
-                                example: propSchema.example,
-                            })
-                        }
-                    )
-                }
-                
-            }
-            
+            let globalParameters: Array<IParameter> = globalParams.map( (gp: ParameterObject) => { return {...transformParameter(gp), source: 'endpoint'} })
+            let localParameters: Array<IParameter> = (spec.parameters||[]).map( (gp: ParameterObject) => { return {...transformParameter(gp), source: 'local'} })
+            let requestParams:  Array<IParameter> = extractRequestParameters(spec)
+            let allParameters: Array<IParameter> = [...globalParameters, ...localParameters, ...requestParams];
+            let responses: Array<IResponse> = extractResponses(spec);
             let ret: IEndpoint = {
                 operationId: spec.operationId || `${url.split('/').reverse()[1]}Method`,
                 description: spec.description || 'description missing',
                 method: method,
-                url: url,
-                parameters: [...gps, ...lps, ...requestParams],
+                url: url.split('{').join('${'),
+                allParameters: allParameters,
+                parameters: {
+                  header: allParameters.filter( a => a.location==ILocation.HEADER.valueOf()),
+                  body: allParameters.filter( a => a.location==ILocation.BODY.valueOf()),
+                  cookie: allParameters.filter( a => a.location==ILocation.COOKIE.valueOf()),
+                  path: allParameters.filter( a => a.location==ILocation.PATH.valueOf()),
+                  query: allParameters.filter( a => a.location==ILocation.QUERY.valueOf()),
+                },
                 summary: spec.summary || 'summary missing',
+                responses: responses,
             };
             return ret;
 }
 
 export default class TransformerService{
 	constructor(){
-		this.extractEndpoints = this.extractEndpoints.bind(this);
-		
-    }
-    async extractEndpoints(api: Api | ExtApi) : Promise<ExtApi>{
-
-        let endpoints: Array<IEndpoint> = Object.keys(api.paths).reduce( 
-            (prev: Array<IEndpoint> , key: string) =>{
-                return prev.concat(generateEndpoints(key, <PathItemObject>(<any>api.paths)[key]));
-            }, []
-        );
-        console.log(endpoints);
-        return Promise.resolve(<ExtApi> {...api, endpoints: endpoints});
-    }
+		this.extractEndpoints = this.extractEndpoints.bind(this);	
+  }
+  async extractEndpoints(api: Api | ExtApi) : Promise<ExtApi>{
+      let endpoints: Array<IEndpoint> = Object.keys(api.paths).reduce( 
+          (prev: Array<IEndpoint> , key: string) =>{
+              return prev.concat(generateEndpoints(key, <PathItemObject>(<any>api.paths)[key]));
+          }, []
+      );
+     // console.log(endpoints);
+      return Promise.resolve(<ExtApi> {...api, endpoints: endpoints});
+  }
 }

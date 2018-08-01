@@ -4,7 +4,6 @@ export default class ApiParser{
 	constructor(){
 		this.extractReference = this.extractReference.bind(this);
 		this.parse = this.parse.bind(this);
-		this.extractReference = this.extractReference.bind(this);
 	}
 	
 	
@@ -12,7 +11,7 @@ export default class ApiParser{
 		const digReference = function(path: Array<string>, context: Api): any{
 			let ret: any = context;
 			while(path.length>0){
-				ret = ret[path.shift() || 0];
+				ret = ret[path.shift() || 0];//remove # char from reference path
 			} 
 			return ret;
 		}

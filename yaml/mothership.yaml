@@ -54,7 +54,11 @@ paths:
         - content
       responses:
         '200':
-          description: Just try it out, model is to complex to include here :)
+          description: Please note that provided examples are missing subNavigationType and topLevelLink properties due to swagger ui shortcomings in handling inheritance. Refer to Model tab instead.
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/NavigationModel'
 
   /api/content/{storeCode}/productlisting/{productListingId}:
     parameters:
@@ -73,7 +77,11 @@ paths:
         - content
       responses:
         '200':
-          description: Just try it out, model is to complex to include here :)
+          description: PLP model data
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProductListingModel'
 
   /api/content/{storeCode}/product/{productId}:
     parameters:
@@ -92,7 +100,11 @@ paths:
         - content
       responses:
         '200':
-          description: Just try it out, model is to complex to include here :)
+          description: PDP model data
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProductDetailsModel'
 
   /api/resource/{storeCode}/basket/summary:
     parameters:
@@ -263,6 +275,369 @@ components:
         quantity:
           type: integer
           example: 5
+
+    Filter:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Colour
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterOption'
+        type:
+          type: string
+          enum:
+            - SUBCATEGORY
+            - COLOUR
+            - SHADE
+            - PRICE
+          example: COLOUR
+      title: Filter
+
+    FilterOption:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Pink
+        value:
+          type: string
+          example: PINK
+      title: FilterOption
+
+    FullProduct:
+      type: object
+      properties:
+        id:
+          type: string
+          description: you can use this id to perform product operations
+          example: 9as8dfhasikfdjhasfiodu
+        title:
+          type: string
+          example: Matte Revolution
+        subtitle:
+          type: string
+          example: Very Victoria
+        description:
+          type: string
+          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
+        longDescription:
+          type: string
+          example: 'Exclusively enriched with Lipstick Tree extract which protects lips and is a natural anti-oxidant, and Orchid Extract which soothes and hydrates for a soft, buildable cashmere finish. Layer and build the color to create the intensity you want, from a light-as-air matte stain to dramatic full-velvet coverage. Color glides on easily and precisely, thanks to the specially shaped square-tip, inspired by the classic shape of a lip brush.'
+        price:
+          type: string
+          example: '£32.00'
+        sellLine:
+          type: string
+          example: 'New In'
+        href:
+          type: string
+          example: '#'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        availability:
+          type: string
+          enum:
+            - BUNDLE
+            - OUT_OF_STOCK
+            - COMING_SOON
+            - SOLD_OUT
+            - AVAILABLE
+        wishList:
+          type: boolean
+      title: FullProduct
+
+    Image:
+      type: object
+      properties:
+        alt:
+          type: string
+          example: Image alt text
+        imageSrc:
+          type: string
+          example: /placeholder/navigation/glow.png
+        title:
+          type: string
+          example: Image Title
+      title: Image
+
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '#'
+        label:
+          type: string
+          example: link label
+      title: Link
+
+    ListOfLinks:
+      type: object
+      properties:
+        topLevelLink:
+          type: string
+          example: '#'
+        childLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+
+    ExpandedLink:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Pretty Youth Glow
+        content:
+          type: string
+          example: Blush
+        title:
+          type: string
+          example: Pretty Youth Glow Blush
+        href:
+          type: string
+          example: '#'
+        image:
+          $ref: '#/components/schemas/Image'
+
+    ImageLink:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '#'
+        label:
+          type: string
+          example: link label
+        image:
+          $ref: '#/components/schemas/Image'
+      title: ImageLink
+
+    NavigationModel:
+      type: object
+      properties:
+        navigationItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationItem'
+      title: NavigationModel
+
+    NavigationItem:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/SingleLevelWithBanner'
+      - $ref: '#/components/schemas/SingleLevelImageLinks'
+      - $ref: '#/components/schemas/ExpandedLinksWithBanner'
+      - $ref: '#/components/schemas/MultiLevelWithBanner'
+      - $ref: '#/components/schemas/MultiLevelWithImageGrid'
+      - $ref: '#/components/schemas/MultiLevelWithMediaLinks'
+      discriminator:
+        propertyName: subNavigationType
+        mapping:
+          SINGLE_LEVEL_WITH_BANNER: '#/components/schemas/SingleLevelWithBanner'
+          SINGLE_LEVEL_IMAGE_LINKS: '#/components/schemas/SingleLevelImageLinks'
+          EXPANDED_LINKS_WITH_BANNER: '#/components/schemas/ExpandedLinksWithBanner'
+          MULTI_LEVEL_WITH_BANNER: '#/components/schemas/MultiLevelWithBanner'
+          MULTI_LEVEL_WITH_IMAGE_GRID: '#/components/schemas/MultiLevelWithImageGrid'
+          MULTI_LEVEL_WITH_MEDIA_LINKS: '#/components/schemas/MultiLevelWithMediaLinks'
+      properties:
+        subNavigationType:
+          type: string
+          enum:
+            - EXPANDED_LINKS_WITH_BANNER
+            - MULTI_LEVEL_WITH_BANNER
+            - MULTI_LEVEL_WITH_IMAGE_GRID
+            - MULTI_LEVEL_WITH_MEDIA_LINKS
+            - SINGLE_LEVEL_IMAGE_LINKS
+            - SINGLE_LEVEL_WITH_BANNER
+          example: EXPANDED_LINKS_WITH_BANNER
+        topLevelLink:
+          $ref: '#/components/schemas/Link'
+      required:
+      - subNavigationType
+      - topLevelLink
+      title: NavigationItem
+
+    SingleLevelWithBanner:
+      title: SingleLevelWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        socialLinks:
+          type: boolean
+          example: false
+
+    SingleLevelImageLinks:
+      title: SingleLevelImageLinks
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+
+    ExpandedLinksWithBanner:
+      title: ExpandedLinksWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpandedLink'
+
+    MultiLevelWithBanner:
+      title: MultiLevelWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    MultiLevelWithImageGrid:
+      title: MultiLevelWithImageGrid
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        imageGridTitle:
+          type: string
+          example:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    MultiLevelWithMediaLinks:
+      title: MultiLevelWithMediaLinks
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        imageGridTitle:
+          type: string
+          example:
+        mediaLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    ProductDetailsModel:
+      type: object
+      properties:
+        breadcrumbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        skus:
+          type: array
+          items:
+            $ref: '#/components/schemas/FullProduct'
+      title: ProductDetailsModel
+
+    ProductListingModel:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "Get eyes to hypnotise with Charlotte Tilbury's array of eye makeup. The collection includes lengthening mascara, the perfect eyeshadow palette for a smokey eye, feline flick eyeliner & eyebrow gel for gorgeous defined brows."
+        title:
+          type: string
+          example: EYESHADOW
+        heroImage:
+          $ref: '#/components/schemas/Image'
+        breadcrumbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        heroLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPreview'
+
+      title: ProductListingModel
+
+    ProductPreview:
+      type: object
+      properties:
+        id:
+          type: string
+          description: you can use this id to perform product operations
+          example: 9as8dfhasikfdjhasfiodu
+        title:
+          type: string
+          example: Matte Revolution
+        subtitle:
+          type: string
+          example: Very Victoria
+        description:
+          type: string
+          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
+        price:
+          type: string
+          example: '£32.00'
+        sellLine:
+          type: string
+          example: 'New In'
+        href:
+          type: string
+          example: "#"
+        image:
+          $ref: '#/components/schemas/Image'
+        rollOverImage:
+          $ref: '#/components/schemas/Image'
+        availability:
+          type: string
+          enum:
+            - BUNDLE
+            - OUT_OF_STOCK
+            - COMING_SOON
+            - SOLD_OUT
+            - AVAILABLE
+        wishList:
+          type: boolean
+      title: ProductPreview
+
   parameters:
     StoreParam:
       name: storeCode

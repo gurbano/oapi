@@ -6,7 +6,7 @@ servers:
   - url: http://mothership-516381200.eu-west-1.elb.amazonaws.com
     description: staging environment
 paths:
-  /resources/newsletter/subscription:
+  /api/resources/newsletter/subscription:
     post:
       summary: Create a subscription
       description: Creates customer newsletter subscription.
@@ -16,6 +16,13 @@ paths:
       responses:
         '200':
           description: newsletter subscription created
+          content:
+            'application/json':
+              schema:
+                properties:
+                  email:
+                    type: string
+                    example: look@you.lol
       requestBody:
         description: Provide customer email here
         content:
@@ -23,77 +30,28 @@ paths:
             schema:
               $ref: '#/components/schemas/NewsletterSubscription'
 
-  /content/{store}/navigation:
+  /api/content/{storeCode}/productlisting/{productListingId}:
     parameters:
-      - name: store
+      - $ref: '#/components/parameters/StoreParam'
+      - name: productListingId
         in: path
-        description: Selected store code. No implementation yet so pass anything.
+        description: Product Listing Page id. Should be human readable and can contain slashes.
         required: true
         schema:
           type: string
     get:
-      summary: Get navigation data model
-      description: Returns data needed for navigation panel on charlotte's webpage.
-      operationId: getNavigation
-      tags:
-        - content
-      responses:
-        '200':
-          description: Just try it out, model is to complex to include here :)
-
-  /content/{store}/productlisting/{productId}:
-    parameters:
-      - name: store
-        in: path
-        description: Selected store code. No implementation yet so pass anything.
-        required: true
-        schema:
-          type: string
-      - name: productId
-        in: path
-        description: Product id. No implementation yet so pass anything.
-        required: true
-        schema:
-          type: string
-    get:
-      summary: Get product data model
+      summary: Get product listing page model
       description: Returns data needed for PLP.
       operationId: getProductListingPage
       tags:
         - content
       responses:
         '200':
-          description: Just try it out, model is to complex to include here :)
-
-  /oauth/authorize/{store}:
-    post:
-      parameters:
-        - in: path
-          name: store
-          required: true
-          schema:
-            type: string
-            example: ct_store_uk
-      requestBody:
-        description: Role of the user. Username and password if REGISTERED user.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthData'
-      summary: Get auth token for public or registered user
-      description: Returns authentication token
-      operationId: authenticate
-      tags:
-        - authentication
-      responses:
-        '200':
-          description: Auth token
+          description: PLP model data
           content:
-            application/json:
+            'application/json':
               schema:
-                $ref: '#/components/schemas/AccessToken'
-
+                $ref: '#/components/schemas/ProductListingModel'
 components:
   schemas:
     NewsletterSubscription:
@@ -103,7 +61,29 @@ components:
         email:
           type: string
           example: look@you.lol
-    AccessToken:
+    Price:
+      required:
+        - amount
+        - currencyCode
+      properties:
+        amount:
+          type: number
+          example: 10.00
+        currencyCode:
+          type: string
+          enum: [GBP, EUR]
+          example: GBP
+    BasketSummary:
+      required:
+        - totalQuantity
+        - price
+      properties:
+        totalQuantity:
+          type: integer
+          example: 1
+        price:
+            $ref: '#/components/schemas/Price'
+    AccessTokenResponse:
       properties:
         access_token:
           type: string
@@ -134,3 +114,409 @@ components:
           type: string
           example: 11111111
           description: Only needed for registered users
+    Quantity:
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          example: 5
+
+    Filter:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Colour
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterOption'
+        type:
+          type: string
+          enum:
+            - SUBCATEGORY
+            - COLOUR
+            - SHADE
+            - PRICE
+          example: COLOUR
+      title: Filter
+
+    FilterOption:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Pink
+        value:
+          type: string
+          example: PINK
+      title: FilterOption
+
+    FullProduct:
+      type: object
+      properties:
+        id:
+          type: string
+          description: you can use this id to perform product operations
+          example: 9as8dfhasikfdjhasfiodu
+        title:
+          type: string
+          example: Matte Revolution
+        subtitle:
+          type: string
+          example: Very Victoria
+        description:
+          type: string
+          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
+        longDescription:
+          type: string
+          example: 'Exclusively enriched with Lipstick Tree extract which protects lips and is a natural anti-oxidant, and Orchid Extract which soothes and hydrates for a soft, buildable cashmere finish. Layer and build the color to create the intensity you want, from a light-as-air matte stain to dramatic full-velvet coverage. Color glides on easily and precisely, thanks to the specially shaped square-tip, inspired by the classic shape of a lip brush.'
+        price:
+          type: string
+          example: '£32.00'
+        sellLine:
+          type: string
+          example: 'New In'
+        href:
+          type: string
+          example: '#'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        availability:
+          type: string
+          enum:
+            - BUNDLE
+            - OUT_OF_STOCK
+            - COMING_SOON
+            - SOLD_OUT
+            - AVAILABLE
+        wishList:
+          type: boolean
+      title: FullProduct
+
+    Image:
+      type: object
+      properties:
+        alt:
+          type: string
+          example: Image alt text
+        imageSrc:
+          type: string
+          example: /placeholder/navigation/glow.png
+        title:
+          type: string
+          example: Image Title
+      title: Image
+
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '#'
+        label:
+          type: string
+          example: link label
+      title: Link
+
+    ListOfLinks:
+      type: object
+      properties:
+        topLevelLink:
+          type: string
+          example: '#'
+        childLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+
+    ExpandedLink:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Pretty Youth Glow
+        content:
+          type: string
+          example: Blush
+        title:
+          type: string
+          example: Pretty Youth Glow Blush
+        href:
+          type: string
+          example: '#'
+        image:
+          $ref: '#/components/schemas/Image'
+
+    ImageLink:
+      type: object
+      properties:
+        href:
+          type: string
+          example: '#'
+        label:
+          type: string
+          example: link label
+        image:
+          $ref: '#/components/schemas/Image'
+      title: ImageLink
+
+    NavigationModel:
+      type: object
+      properties:
+        navigationItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationItem'
+      title: NavigationModel
+
+    NavigationItem:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/SingleLevelWithBanner'
+      - $ref: '#/components/schemas/SingleLevelImageLinks'
+      - $ref: '#/components/schemas/ExpandedLinksWithBanner'
+      - $ref: '#/components/schemas/MultiLevelWithBanner'
+      - $ref: '#/components/schemas/MultiLevelWithImageGrid'
+      - $ref: '#/components/schemas/MultiLevelWithMediaLinks'
+      discriminator:
+        propertyName: subNavigationType
+        mapping:
+          SINGLE_LEVEL_WITH_BANNER: '#/components/schemas/SingleLevelWithBanner'
+          SINGLE_LEVEL_IMAGE_LINKS: '#/components/schemas/SingleLevelImageLinks'
+          EXPANDED_LINKS_WITH_BANNER: '#/components/schemas/ExpandedLinksWithBanner'
+          MULTI_LEVEL_WITH_BANNER: '#/components/schemas/MultiLevelWithBanner'
+          MULTI_LEVEL_WITH_IMAGE_GRID: '#/components/schemas/MultiLevelWithImageGrid'
+          MULTI_LEVEL_WITH_MEDIA_LINKS: '#/components/schemas/MultiLevelWithMediaLinks'
+      properties:
+        subNavigationType:
+          type: string
+          enum:
+            - EXPANDED_LINKS_WITH_BANNER
+            - MULTI_LEVEL_WITH_BANNER
+            - MULTI_LEVEL_WITH_IMAGE_GRID
+            - MULTI_LEVEL_WITH_MEDIA_LINKS
+            - SINGLE_LEVEL_IMAGE_LINKS
+            - SINGLE_LEVEL_WITH_BANNER
+          example: EXPANDED_LINKS_WITH_BANNER
+        topLevelLink:
+          $ref: '#/components/schemas/Link'
+      required:
+      - subNavigationType
+      - topLevelLink
+      title: NavigationItem
+
+    SingleLevelWithBanner:
+      title: SingleLevelWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        socialLinks:
+          type: boolean
+          example: false
+
+    SingleLevelImageLinks:
+      title: SingleLevelImageLinks
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+
+    ExpandedLinksWithBanner:
+      title: ExpandedLinksWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpandedLink'
+
+    MultiLevelWithBanner:
+      title: MultiLevelWithBanner
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    MultiLevelWithImageGrid:
+      title: MultiLevelWithImageGrid
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        imageGridTitle:
+          type: string
+          example:
+        banner:
+          $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    MultiLevelWithMediaLinks:
+      title: MultiLevelWithMediaLinks
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/NavigationItem'
+      properties:
+        imageGridTitle:
+          type: string
+          example:
+        mediaLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageLink'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListOfLinks'
+
+    ProductDetailsModel:
+      type: object
+      properties:
+        breadcrumbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        skus:
+          type: array
+          items:
+            $ref: '#/components/schemas/FullProduct'
+      title: ProductDetailsModel
+
+    ProductListingModel:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "Get eyes to hypnotise with Charlotte Tilbury's array of eye makeup. The collection includes lengthening mascara, the perfect eyeshadow palette for a smokey eye, feline flick eyeliner & eyebrow gel for gorgeous defined brows."
+        title:
+          type: string
+          example: EYESHADOW
+        heroImage:
+          $ref: '#/components/schemas/Image'
+        breadcrumbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        heroLinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPreview'
+
+      title: ProductListingModel
+
+    ProductPreview:
+      type: object
+      properties:
+        id:
+          type: string
+          description: you can use this id to perform product operations
+          example: 9as8dfhasikfdjhasfiodu
+        title:
+          type: string
+          example: Matte Revolution
+        subtitle:
+          type: string
+          example: Very Victoria
+        description:
+          type: string
+          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
+        price:
+          type: string
+          example: '£32.00'
+        sellLine:
+          type: string
+          example: 'New In'
+        href:
+          type: string
+          example: "#"
+        image:
+          $ref: '#/components/schemas/Image'
+        rollOverImage:
+          $ref: '#/components/schemas/Image'
+        availability:
+          type: string
+          enum:
+            - BUNDLE
+            - OUT_OF_STOCK
+            - COMING_SOON
+            - SOLD_OUT
+            - AVAILABLE
+        wishList:
+          type: boolean
+      title: ProductPreview
+
+  parameters:
+    StoreParam:
+      name: storeCode
+      in: path
+      description: Selected store code
+      required: true
+      example: UK
+      schema:
+        type: string
+        enum: [UK, EU]
+    AuthHeaderParam:
+      name: Authorization
+      in: header
+      required: true
+      example: Bearer 1319c1a7-b984-4765-b25e-1aafbcbd72b1
+      schema:
+        type: string
+      description: Authorization token
+    BasketIdParam:
+      name: basketId
+      in: path
+      description: Basket identifier
+      required: true
+      example: ha3tezrtmy2diljummztkljumi3=
+      schema:
+        type: string
+        example: ha3tezrtmy2diljummztkljumi3=
+    LineItemIdParam:
+      name: lineItemId
+      in: path
+      description: Line item identifier
+      required: true
+      example: meytimzsgiygkljumvrgkljumu=
+      schema:
+        type: string
+        example: meytimzsgiygkljumvrgkljumu=

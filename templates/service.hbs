@@ -1,5 +1,20 @@
 {{>readme}}
 
+//COMMON UTILS - (TO REFACTOR)
+const toQueryString = (paramsMap: any ) => {
+  let ret = Object.keys(paramsMap || {}).map(k => `${k}=${paramsMap[k]}`).join('&');
+  return encodeURI(ret);
+};
+const ApiCallWrapper= (
+	url: string,
+	method: string,
+	action: string,
+	body: {},
+	header: {},
+  cookie: {},
+): Promise<any> => {return Promise.resolve({})}
+
+//COMMON INTERFACES
 export interface IService{
 	info: IServiceInfo;
 	servers: Array<IServer>;
@@ -18,21 +33,18 @@ export interface I{{info.title}}Service{
 	info: IServiceInfo;
 	servers: Array<IServer>;
 }
-//INTERFACES
+
+//ENDPOINTS INTERFACES
 {{#each endpoints}}
+  // {{this.operationId}} input
 	{{>interface_input}}
+
+  // {{this.operationId}} output
+  {{>interface_output}}
+
 {{/each}}
 
-//httpActionCreator(`/resources/newsletter/subscription`, METHODS.post, FETCH_EMAIL, { body: { email: email }});
-
-const httpActionCreator= (
-	url: string,
-	method: string,
-	action: string,
-	body: any,
-	header: any,
-): Promise<any> => {return Promise.resolve({})}
-
+//SERVICE CLASS
 export default class {{info.title}}Service implements I{{info.title}}Service{
 	public info: IServiceInfo;
 	public servers: Array<IServer>;
