@@ -1,0 +1,7 @@
+{{#each schemas}}
+export interface {{this.name}}  {{extends this.extends}} {
+		{{#each properties}}
+      {{this.name}}: {{{this.type}}}; //{{this.example}} ({{this.description}})
+    {{/each}}
+}
+{{/each}}

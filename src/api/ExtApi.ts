@@ -1,4 +1,5 @@
 import {Api, ParameterLocation, Styles} from './Api';
+import { ParamInterface, SchemaInterface } from '../transform';
 
 /*
     Describes how the parameter value will be serialized depending on the type of the parameter value.
@@ -28,7 +29,6 @@ export enum METHODS {
 
 export interface ISchema {
     type: string;
-
 }
 
 export interface IParameter{
@@ -48,14 +48,14 @@ export interface IResponseParameters {
   schema: ISchema | string;
   description: string;
   name: string;
-  location?: keyof ILocation ;
   example: string;
   type: string;
   mediaType?: string;
 }
 export interface IResponse {
     code: string;
-    data: Array<IResponseParameters>;
+    type: string|undefined;
+    parameters?: Array<IResponseParameters>;
 }
 export interface IEndpoint{
     operationId?: string;
@@ -72,8 +72,11 @@ export interface IEndpoint{
     responses: Array<IResponse>;
     description: string;
     summary: string;
+    tags: string;
 }
 
 export default interface ExtApi extends Api{
     endpoints: Array<IEndpoint>;
+    interfaces?: Array<ParamInterface>;
+    schemas?: Array<SchemaInterface>;
 }

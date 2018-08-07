@@ -1,0 +1,7 @@
+{{#each params}}
+export interface {{this.name}}{
+		{{#each properties}}
+      {{this.name}}: {{{this.type}}}; //{{this.example}} ({{this.description}})
+    {{/each}}
+}
+{{/each}} 

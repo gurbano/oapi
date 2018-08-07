@@ -1,0 +1,5 @@
+export interface I{{name}}RefParameters{
+  {{#eachInMap properties}}
+		{{this.key}} : {{{tojson this.value}}}
+	{{/eachInMap}}
+}

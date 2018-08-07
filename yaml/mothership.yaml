@@ -23,6 +23,31 @@ paths:
             schema:
               $ref: '#/components/schemas/NewsletterSubscription'
 
+  /api/resources/runtimeconfig/{spaceId}:
+    parameters:
+      - name: spaceId
+        in: path
+        description: ID of space. Configured in Contentful.
+        required: true
+        example: uk-middle-tier
+        schema:
+          type: string
+    get:
+      summary: Get all configuration entries for the given space
+      description: Returns all the configuration for the given space. The space and its configurations are setup and managed in Contentful. Use this endpoint for configuration that you wish to be able to change quickly at runtime, for example emergency feature switches.
+      operationId: getRuntimeConfiguration
+      tags:
+        - configuration
+      responses:
+        '200':
+          description: The space has been found. All configurations in this space are returned.
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/RuntimeConfigurationSpace'
+        '404':
+          description: The spaceId doesn't correspond to a space in contentful. Please check your spelling matches what is given in Contentful.
+
   /api/resources/{storeCode}/wishlist/{productId}:
     parameters:
       - $ref: "#/components/parameters/AuthHeaderParam"
@@ -38,10 +63,36 @@ paths:
       summary: Add product to a wishlist
       operationId: addProductToWishlist
       tags:
-        - Wishlist
+        - wishlist
       responses:
         '204':
           description: No content
+
+  /api/resources/{storeCode}/addressBook/:
+    parameters:
+      - $ref: "#/components/parameters/AuthHeaderParam"
+      - $ref: "#/components/parameters/StoreParam"
+      - name: includeAll
+        in: query
+        description: Flag to include all additional addresses in the response.
+        example: true
+        required: false
+        schema:
+          type: boolean
+    get:
+      summary: Get the address book for the customer
+      description: Returns all the adresses for the given customer
+      operationId: getAddressBook
+      tags:
+      - address
+      - address book
+      responses:
+        '200':
+          description: An address book for the user has been found. The address book is returned
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/AddressBook'
 
   /api/content/{storeCode}/navigation:
     parameters:
@@ -151,6 +202,27 @@ paths:
         '204':
           description: No content
   /api/resources/{storeCode}/basket/{basketId}/{lineItemId}:
+    put:
+      parameters:
+        - $ref: "#/components/parameters/AuthHeaderParam"
+        - $ref: "#/components/parameters/StoreParam"
+        - $ref: "#/components/parameters/BasketIdParam"
+        - $ref: "#/components/parameters/LineItemIdParam"
+
+      summary: Update lineitem in the basket
+      operationId: updateProductInBasket
+      tags:
+        - basket
+      requestBody:
+        description: Updated quantity of the product.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Quantity'
+      responses:
+        '204':
+          description: No content
     delete:
       parameters:
         - $ref: "#/components/parameters/AuthHeaderParam"
@@ -160,6 +232,19 @@ paths:
 
       summary: Delete product from basket
       operationId: removeProductFromBasket
+      tags:
+        - basket
+      responses:
+        '204':
+          description: No content
+  /api/resources/{storeCode}/basket/{basketId}:
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/AuthHeaderParam"
+        - $ref: "#/components/parameters/StoreParam"
+        - $ref: "#/components/parameters/BasketIdParam"
+      summary: Empty basket
+      operationId: emptyBasket
       tags:
         - basket
       responses:
@@ -276,6 +361,33 @@ components:
           type: integer
           example: 5
 
+    RuntimeConfigurationSpace:
+      type: object
+      properties:
+        spaceId:
+          type: string
+          example: uk-middle-tier
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuntimeConfiguration'
+
+    RuntimeConfiguration:
+      type: object
+      properties:
+        key:
+          type: string
+          example: use-bazaar-voice
+        stringValue:
+          type: string
+          example: hello world
+        numberValue:
+          type: number
+          example: 123
+        booleanValue:
+          type: boolean
+          example: false
+
     Filter:
       type: object
       properties:
@@ -307,38 +419,39 @@ components:
           example: PINK
       title: FilterOption
 
-    FullProduct:
+    Sku:
       type: object
       properties:
         id:
           type: string
           description: you can use this id to perform product operations
-          example: 9as8dfhasikfdjhasfiodu
-        title:
-          type: string
-          example: Matte Revolution
-        subtitle:
-          type: string
-          example: Very Victoria
-        description:
-          type: string
-          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
-        longDescription:
-          type: string
-          example: 'Exclusively enriched with Lipstick Tree extract which protects lips and is a natural anti-oxidant, and Orchid Extract which soothes and hydrates for a soft, buildable cashmere finish. Layer and build the color to create the intensity you want, from a light-as-air matte stain to dramatic full-velvet coverage. Color glides on easily and precisely, thanks to the specially shaped square-tip, inspired by the classic shape of a lip brush.'
-        price:
-          type: string
-          example: '£32.00'
-        sellLine:
-          type: string
-          example: 'New In'
+          example: very_victoria_lipstick
         href:
           type: string
           example: '#'
+        subtitle:
+          type: string
+          example: Very Victoria
+        shortDescription:
+          type: string
+          example: 'Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips.'
+        sellLine:
+          type: string
+          example: 'Award Winner'
+        detailedProductDescription:
+          $ref: '#/components/schemas/DetailedProductDescription'
+        price:
+          $ref: '#/components/schemas/PriceContainer'
+        featureBlock:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureBlockItem'
         images:
           type: array
           items:
             $ref: '#/components/schemas/Image'
+        swatchImage:
+          $ref: '#/components/schemas/Image'
         availability:
           type: string
           enum:
@@ -347,9 +460,214 @@ components:
             - COMING_SOON
             - SOLD_OUT
             - AVAILABLE
-        wishList:
-          type: boolean
-      title: FullProduct
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+      title: Sku
+
+    Widget:
+      type: object
+      required:
+      - type
+      oneOf:
+      - $ref: '#/components/schemas/CarouselWidget'
+      - $ref: '#/components/schemas/CrossSellWidget'
+      - $ref: '#/components/schemas/GalleryWidget'
+      - $ref: '#/components/schemas/InformationMapWidget'
+      - $ref: '#/components/schemas/TwoColumnWidget'
+      - $ref: '#/components/schemas/VideoBlockWidget'
+      discriminator:
+        propertyName: subNavigationType
+        mapping:
+          CAROUSEL: '#/components/schemas/CarouselWidget'
+          CROSS_SELL: '#/components/schemas/CrossSellWidget'
+          GALLERY: '#/components/schemas/GalleryWidget'
+          INFORMATION_MAP: '#/components/schemas/InformationMapWidget'
+          TWO_COLUMN: '#/components/schemas/TwoColumnWidget'
+          VIDEO_BLOCK: '#/components/schemas/VideoBlockWidget'
+      properties:
+        type:
+          type: string
+          enum:
+            - CAROUSEL
+            - CROSS_SELL
+            - GALLERY
+            - TWO_COLUMN
+            - VIDEO_BLOCK
+            - INFORMATION_MAP
+      title: Widget
+
+    CarouselWidget:
+      title: CarouselWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        backgroundColour:
+          type: string
+          example: "transparent"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+
+    GalleryWidget:
+      title: GalleryWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        title:
+          type: string
+          example: "ON YOUR SKINTONE"
+        backgroundColour:
+          type: string
+          example: "transparent"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+
+    InformationMapWidget:
+      title: InformationMapWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        content:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            "APPLICATION TIPS": "Resize and reshape your lips using the lip liner in pillow talk for fair skin or foxy brown for dark skin."
+            "FREQUENTLY ASKED QUESTIONS": "1. How to apply it on my face? - no idea"
+          backgroundColour:
+            type: string
+            example: "transparent"
+
+    TwoColumnWidget:
+      title: TwoColumnWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        image:
+          $ref: '#/components/schemas/Image'
+        richDescription:
+          type: string
+          example: "#MY STORY"
+        descriptionPosition:
+          type: string
+          example: "RIGHT"
+        backgroundColour:
+          type: string
+          example: "transparent"
+
+    VideoBlockWidget:
+      title: VideoBlockWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        videoUrl:
+          type: string
+          example: "#"
+        actionLabel:
+          type: string
+          example: "WATCH NOW"
+        richDescription:
+          type: string
+          example: "#MY STORY"
+        descriptionPosition:
+          type: string
+          example: "RIGHT"
+        backgroundColour:
+          type: string
+          example: "transparent"
+
+    CrossSellWidget:
+      title: CrossSellWidget
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        title:
+          type: string
+          example: "CHARLOTTE RECOMMENDS"
+        skus:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSellSku'
+        backgroundColour:
+          type: string
+          example: "transparent"
+
+    CrossSellSku:
+      title: CrossSellSku
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Widget'
+      properties:
+        id:
+          type: string
+          example: "very_victoria_lipstick"
+        href:
+          type: string
+          example: "#"
+        image:
+          $ref: '#/components/schemas/Image'
+        title:
+          type: string
+          example: "INSTANT LOOK IN A PALETTE"
+        subtitle:
+          type: string
+          example: "SMOKEY EYE BEAUTY"
+        description:
+          type: string
+          example: "Volume 2 Of the Best-Selling Volumising Mascara"
+        price:
+          $ref: '#/components/schemas/PriceContainer'
+
+
+
+    DetailedProductDescription:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "INSPIRED BY VICTORIA BECKHAM, PERFECT FOR EVERYDAY MAKEUP"
+        descriptionHead:
+          type: string
+          example: "Luminous, modern matte lipstick with a long-lasting hydrating formula to give you fuller, softer lips."
+        descriptionTail:
+          type: string
+          example: "Exclusively enriched with Lipstick Tree extract which protects lips and is a natural anti-oxidant, and Orchid Extract which soothes and hydrates for a soft, buildable cashmere finish. Layer and build the color to create the intensity you want, from a light-as-air matte stain to dramatic full-velvet coverage. Color glides on easily and precisely, thanks to the specially shaped square-tip, inspired by the classic shape of a lip brush."
+        backgroundColour:
+          type: string
+          example: "transparent"
+      title: DetailedProductDescription
+
+    FeatureBlockItem:
+      type: object
+      properties:
+        icon:
+          $ref: '#/components/schemas/Image'
+        text:
+          type: string
+          example: "Free delivery"
+      title: FeatureBlockItem
+
+    PriceContainer:
+      type: object
+      required:
+        - current
+      properties:
+        listingPrice:
+          $ref: '#/components/schemas/Price'
+        purchasePrice:
+          $ref: '#/components/schemas/Price'
+      title: PriceContainer
 
     Image:
       type: object
@@ -557,10 +875,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Link'
+        productName:
+          type: string
         skus:
           type: array
           items:
-            $ref: '#/components/schemas/FullProduct'
+            $ref: '#/components/schemas/Sku'
       title: ProductDetailsModel
 
     ProductListingModel:
@@ -637,6 +957,53 @@ components:
         wishList:
           type: boolean
       title: ProductPreview
+
+    AddressBook:
+      type: object
+      properties:
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        additionalAdresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+      title: AddressBook
+
+    Address:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        company:
+          type: string
+          example: yourcompany name
+        telephone:
+          type: string
+          example: +44 123 456 789
+        fax:
+          type: string
+          example: +44 789 456 123
+        street:
+          type: string
+          example: address street 1
+        city:
+          type: string
+          example: London
+        county:
+          type: string
+          example: XX
+        postCode:
+          type: string
+          example: NW1
+        country:
+          type: string
+          example: UK
 
   parameters:
     StoreParam:

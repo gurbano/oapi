@@ -1,5 +1,17 @@
 {{>readme}}
 
+import {
+  {{#each schemas}}
+    {{this.name}},
+  {{/each}}
+} from './schemas.out'
+
+import {
+  {{#each params}}
+    {{this.name}},
+  {{/each}}
+} from './params.out'
+
 //COMMON UTILS - (TO REFACTOR)
 const toQueryString = (paramsMap: any ) => {
   let ret = Object.keys(paramsMap || {}).map(k => `${k}=${paramsMap[k]}`).join('&');
@@ -33,6 +45,10 @@ export interface I{{info.title}}Service{
 	info: IServiceInfo;
 	servers: Array<IServer>;
 }
+
+{{#each refs}}
+    {{>interface_refs}}
+{{/each}}
 
 //ENDPOINTS INTERFACES
 {{#each endpoints}}

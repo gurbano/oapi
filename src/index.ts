@@ -14,7 +14,7 @@ const transformer = new TransformerService();
 
 program
   .version('0.0.1')
-  .usage('<inputFile> <outputDir>')
+  .usage(' <inputFile> <outputDir>')
   .arguments('<input> <outputDir>')
   .action(function (input, outputDir) {
    	const writer = {
@@ -30,17 +30,30 @@ program
 		}
 	};
 
-    fetcher.fetch(input)
+  fetcher.fetch(input)
 	.then(parser.parse)
-	//.then(writer.write.bind(null, 'parsed.json'))
-  .then(parser.extractReference)
-  .then(parser.extractReference)
-  .then(parser.extractReference)
-	.then(writer.write.bind(null, 'extracted.json'))
-	.then(transformer.extractEndpoints)
-	.then(writer.write.bind(null, 'processed.json'))
-	.then(generator.generateService)
-	.then(writer.write.bind(null, 'src/services.out.ts')) 
+  //.then(writer.write.bind(null, 'parsed.json'))
+   
+   .then(transformer.extractSchemaInterfaces)
+   .then(generator.generateBaseInterfaces)
+   .then(writer.write.bind(null, 'output/schemas.out.ts'))  
+ 
+  fetcher.fetch(input)
+	.then(parser.parse)
+   .then(transformer.extractParamsInterfaces)
+   .then(generator.generateParamsInterfaces)
+   .then(writer.write.bind(null, 'output/params.out.ts'))  
+
+  fetcher.fetch(input)
+	.then(parser.parse)
+    .then(transformer.extractEndpoints)
+    //.then(writer.write.bind(null, 'output/service.out.json'))  
+    .then(generator.generateService)
+    .then(writer.write.bind(null, 'output/service.out.ts'))  
+
+	//.then(writer.write.bind(null, 'processed.json'))
+	//.then(generator.generateService)
+	
   })
   .parse(process.argv); // end with parse to parse through the input
 
